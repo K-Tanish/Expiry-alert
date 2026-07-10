@@ -472,16 +472,7 @@ export default function App() {
             </div>
           </>} />
 
-          {/* 6. TEAM MANAGEMENT TAB */}
-          <Route path="/team" element={<>
-            <div className="max-w-7xl mx-auto">
-              <TeamView 
-                team={team}
-                onAddMember={handleAddTeamMember}
-                onToggleStatus={handleToggleTeamStatus}
-              />
-            </div>
-          </>} />
+          {/* 6. TEAM MANAGEMENT TAB REMOVED */}
 
           {/* 7. SYSTEM SETTINGS PANEL */}
           <Route path="/settings" element={<>

@@ -18,16 +18,16 @@ export default function SettingsView({ onResetData, onClearData, recordsCount }:
   };
 
   return (
-    <div className="space-y-6 select-none animate-in fade-in duration-200 max-w-4xl">
+    <div className="space-y-6 select-none animate-in fade-in duration-200 w-full">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-slate-800 tracking-tight">System Configuration</h2>
         <p className="text-sm text-slate-500 mt-1">Configure automated compliance scanners, review intervals, and administrative controls.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Main Settings Panel */}
-        <div className="md:col-span-2 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm shadow-slate-100/40 space-y-6">
+        <div className="lg:col-span-2 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm shadow-slate-100/40 space-y-6">
           <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-4">
             <Bell size={16} className="text-orange-700" />
             Alert Protocols

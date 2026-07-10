@@ -29,7 +29,6 @@ export default function Sidebar({ currentView, setCurrentView, recordsCount }: S
     { id: 'categories', label: 'Categories', icon: FolderOpen },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'team', label: 'Team', icon: Users },
   ];
 
   const generalItems = [

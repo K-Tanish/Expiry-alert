@@ -1,4 +1,4 @@
-import { Search, Mail, Bell, Settings, Users, HelpCircle } from 'lucide-react';
+import { Search, Bell, Settings, HelpCircle, Users, User } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 export default function Topbar() {
@@ -87,9 +87,6 @@ export default function Topbar() {
       {/* Right: Actions and Profile */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-4 text-slate-500">
-          <NavLink to="/team" className={({ isActive }) => `relative transition-colors ${isActive ? 'text-teal-700' : 'hover:text-teal-700'}`} title="Team">
-            <Users size={18} />
-          </NavLink>
           <NavLink to="/settings" className={({ isActive }) => `relative transition-colors ${isActive ? 'text-teal-700' : 'hover:text-teal-700'}`} title="Settings">
             <Settings size={18} />
           </NavLink>
@@ -107,11 +104,11 @@ export default function Topbar() {
 
         <div className="flex items-center gap-3 pl-2">
           <div className="text-right">
-            <p className="text-sm font-bold text-slate-800 leading-tight">Thomas Gepsan</p>
+            <p className="text-sm font-bold text-slate-800 leading-tight">Tanish Kadam</p>
             <p className="text-[11px] text-slate-500">Super Admin</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-            <img src="https://i.pravatar.cc/150?img=11" alt="Profile" className="w-full h-full object-cover" />
+          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+            <User size={20} />
           </div>
         </div>
       </div>

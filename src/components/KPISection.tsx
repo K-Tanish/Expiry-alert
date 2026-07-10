@@ -56,16 +56,13 @@ export default function KPISection({
         onClick={() => {
           if (onActionRequiredClick) onActionRequiredClick();
         }}
-        className="bg-slate-200 rounded-3xl overflow-hidden shadow-sm relative h-48 group cursor-pointer lg:col-span-1 lg:row-span-2"
+        className="bg-slate-200 rounded-3xl overflow-hidden shadow-sm relative h-48 group cursor-pointer lg:col-span-1"
       >
         <img 
           src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop" 
           alt="Architecture"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-4 right-4 w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white">
-          <ArrowUpRight size={16} />
-        </div>
       </div>
 
       {/* 4. Top Right Floating Card & Expired */}
@@ -110,22 +107,118 @@ export default function KPISection({
         onClick={() => {
           if (onActionRequiredClick) onActionRequiredClick();
         }}
-        className="lg:col-span-2 bg-teal-700 rounded-3xl p-6 overflow-hidden relative shadow-sm h-40 flex items-center justify-between text-white group cursor-pointer hover:bg-teal-800 transition-colors"
+        className="lg:col-span-2 bg-rose-800 rounded-3xl p-6 overflow-hidden relative shadow-sm h-48 flex items-center justify-between text-white group cursor-pointer hover:bg-rose-900 transition-colors"
       >
         <div className="relative z-10">
           <h2 className="text-2xl font-black mb-1">Action Required</h2>
-          <p className="text-teal-200 text-xs mb-4">Review top priority records</p>
-          <div className="inline-flex items-center gap-4 bg-teal-800/50 rounded-full px-4 py-1.5 border border-teal-600/50">
-            <span className="text-xs font-bold tracking-widest text-teal-100">REVIEW ALL</span>
-            <span className="text-[9px] text-teal-300">CLICK HERE</span>
+          <p className="text-rose-200 text-xs mb-4">Review top priority records</p>
+          <div className="inline-flex items-center gap-4 bg-rose-900/50 rounded-full px-4 py-1.5 border border-rose-700/50">
+            <span className="text-xs font-bold tracking-widest text-rose-100">REVIEW ALL</span>
+            <span className="text-[9px] text-rose-300">CLICK HERE</span>
           </div>
         </div>
         {/* Decorative graphic */}
         <div className="absolute right-0 bottom-0 w-1/2 h-full opacity-30 flex items-end justify-end pointer-events-none">
           <svg viewBox="0 0 200 200" className="w-full h-full fill-white" preserveAspectRatio="xMaxYMax slice">
             <circle cx="150" cy="150" r="100" />
-            <circle cx="150" cy="150" r="70" fill="#0f766e" />
+            <circle cx="150" cy="150" r="70" fill="#881337" />
           </svg>
+        </div>
+      </div>
+      
+      {/* 6. Alert Status Gauge Card */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 h-48 flex items-center justify-between p-6 lg:col-span-2 overflow-hidden">
+        
+        {/* Legend on Left */}
+        <div className="flex flex-col gap-4 justify-center pl-4 w-1/3">
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-emerald-900 shadow-sm"></div>
+            <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Expiring</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-sm"></div>
+            <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Renewed</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full border border-slate-300 shadow-sm" style={{ background: 'repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 1.5px, transparent 1.5px, transparent 4px)' }}></div>
+            <span className="text-xs text-slate-500 font-bold uppercase tracking-wide">Expired</span>
+          </div>
+        </div>
+
+        {/* SVG on Right */}
+        <div className="w-2/3 h-full relative flex items-center justify-center">
+          <svg viewBox="0 0 200 130" className="w-full h-[120%] overflow-visible mt-6">
+            <defs>
+              <pattern id="stripes" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="6" stroke="#cbd5e1" strokeWidth="2" />
+              </pattern>
+              <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="-2" dy="2" stdDeviation="2" floodOpacity="0.15" />
+              </filter>
+            </defs>
+            
+            {(() => {
+              const nonRenewed = expiringCount + expiredCount;
+              const total = nonRenewed > 0 ? nonRenewed / 0.7 : 100;
+              const renewed = total * 0.3;
+              
+              const c = Math.PI * 80;
+              const l1 = (renewed / total) * c; // Light Green (Middle)
+              const l2 = (expiringCount / total) * c; // Dark Green (Left)
+              const l3 = (expiredCount / total) * c; // Striped (Right)
+              
+              return (
+                <>
+                  {/* Striped (Right) */}
+                  <path 
+                    d="M 20 110 A 80 80 0 0 1 180 110" 
+                    fill="none" 
+                    stroke="url(#stripes)" 
+                    strokeWidth="24" 
+                    strokeLinecap="round" 
+                    strokeDasharray={`${l3} ${c}`}
+                    strokeDashoffset={-(l2 + l1)}
+                  />
+                  
+                  {/* Light Green (Middle) */}
+                  <path 
+                    d="M 20 110 A 80 80 0 0 1 180 110" 
+                    fill="none" 
+                    stroke="#10b981" 
+                    strokeWidth="24" 
+                    strokeLinecap="round" 
+                    strokeDasharray={`${l1} ${c}`}
+                    strokeDashoffset={-l2}
+                  />
+                  
+                  {/* Dark Green (Left) */}
+                  <path 
+                    d="M 20 110 A 80 80 0 0 1 180 110" 
+                    fill="none" 
+                    stroke="#064e3b" 
+                    strokeWidth="24" 
+                    strokeLinecap="round" 
+                    strokeDasharray={`${l2} ${c}`}
+                    strokeDashoffset={0}
+                    filter="url(#shadow)"
+                  />
+                </>
+              );
+            })()}
+          </svg>
+          <div className="absolute top-[65%] left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+            {(() => {
+              const nonRenewed = expiringCount + expiredCount;
+              const total = nonRenewed > 0 ? nonRenewed / 0.7 : 100;
+              const expiringPct = Math.round((expiringCount / total) * 100);
+              return (
+                <>
+                  <span className="text-4xl font-black text-slate-800 tracking-tight leading-none mb-1">{expiringPct}%</span>
+                  <span className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider">Expiring</span>
+                </>
+              );
+            })()}
+          </div>
         </div>
       </div>
       
