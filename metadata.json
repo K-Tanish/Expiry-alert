@@ -1,0 +1,6 @@
+{
+  "name": "Expirix",
+  "description": "Expirix is a Record Intelligence dashboard that lets you monitor and manage your critical records, licenses, contracts, and compliance expiries with ease.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
