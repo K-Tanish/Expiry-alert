@@ -3,12 +3,16 @@ import { RecordStatus, RecordCategory, RecordItem, TeamMember, ExpiryTimelineEve
 import { generateAllRecords, SEED_TEAM, INITIAL_TIMELINE_EVENTS, CURRENT_DATE_STR } from './data/seedData';
 
 import { ChevronDown } from 'lucide-react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+
 // Import Modular Components
 import Topbar from './components/Topbar';
 import RightSidebar from './components/RightSidebar';
 import KPISection from './components/KPISection';
 import NeedsAttention from './components/NeedsAttention';
 import RecordModal from './components/RecordModal';
+import RenewModal from './components/RenewModal';
+import AlertSimulatorModal from './components/AlertSimulatorModal';
 
 // Import View Panels
 import RecordsView from './components/RecordsView';
@@ -41,8 +45,8 @@ export function calculateRecordStatus(expiryDateStr: string): RecordStatus {
 }
 
 export default function App() {
-  // Navigation View State
-  const [currentView, setCurrentView] = useState<string>('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Persistence Key States
   const [records, setRecords] = useState<RecordItem[]>([]);
@@ -61,9 +65,14 @@ export default function App() {
   const [selectedRecord, setSelectedRecord] = useState<RecordItem | null>(null);
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'view'>('view');
 
+  const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+  const [recordToRenew, setRecordToRenew] = useState<RecordItem | null>(null);
+
+  const [isAlertSimulatorOpen, setIsAlertSimulatorOpen] = useState(false);
+
   // Load from local storage or fallback to seed
   useEffect(() => {
-    const cachedRecords = localStorage.getItem('expirix_records');
+    const cachedRecords = localStorage.getItem('expirix_db_v3');
     const cachedTeam = localStorage.getItem('expirix_team');
     const cachedEvents = localStorage.getItem('expirix_timeline');
 
@@ -72,7 +81,7 @@ export default function App() {
     } else {
       const generated = generateAllRecords();
       setRecords(generated);
-      localStorage.setItem('expirix_records', JSON.stringify(generated));
+      localStorage.setItem('expirix_db_v3', JSON.stringify(generated));
     }
 
     if (cachedTeam) {
@@ -90,10 +99,16 @@ export default function App() {
     }
   }, []);
 
+  // Save to local storage whenever records change
+  useEffect(() => {
+    if (records.length > 0) {
+      localStorage.setItem('expirix_db_v3', JSON.stringify(records));
+    }
+  }, [records]);
+
   // Sync to local storage
   const syncRecords = (newRecords: RecordItem[]) => {
     setRecords(newRecords);
-    localStorage.setItem('expirix_records', JSON.stringify(newRecords));
   };
 
   const syncTeam = (newTeam: TeamMember[]) => {
@@ -194,34 +209,34 @@ export default function App() {
     syncRecords(updatedRecords);
   };
 
+  // Renew Record action
+  const handleOpenRenew = (record: RecordItem) => {
+    setRecordToRenew(record);
+    setIsRenewModalOpen(true);
+  };
+
+  const handleRenewRecord = (id: string, newExpiryDate: string) => {
+    const updated = records.map(rec => {
+      if (rec.id === id) {
+        return {
+          ...rec,
+          expiryDate: newExpiryDate,
+          status: calculateRecordStatus(newExpiryDate),
+          reminderSent: false
+        };
+      }
+      return rec;
+    });
+    syncRecords(updated);
+    alert('Document renewed successfully.');
+    setIsRenewModalOpen(false);
+  };
+
   // Delete Record action
   const handleDeleteRecord = (id: string) => {
     const updated = records.filter(r => r.id !== id);
     syncRecords(updated);
     alert("Record deleted from active database registry.");
-  };
-
-  // Renew Record Action (pushed forward by 1 year)
-  const handleRenewRecord = (id: string) => {
-    const updated = records.map((r) => {
-      if (r.id === id) {
-        const d = new Date(r.expiryDate);
-        d.setFullYear(d.getFullYear() + 1); // add 1 year
-        const newExpiryStr = d.toISOString().split('T')[0];
-        
-        return {
-          ...r,
-          expiryDate: newExpiryStr,
-          status: calculateRecordStatus(newExpiryStr),
-          reminderSent: false,
-          notes: `Renewed on ${new Date().toLocaleDateString('en-US')}. ${r.notes || ''}`
-        };
-      }
-      return r;
-    });
-
-    syncRecords(updated);
-    alert("Record extended successfully by 365 days. Active compliance index restored.");
   };
 
   // Invite Team Collaborator Action
@@ -326,7 +341,7 @@ export default function App() {
   // Route helper for Category Folder clicks
   const handleCategorySelectRoute = (category: RecordCategory) => {
     setCategoryRouteFilter(category);
-    setCurrentView('records');
+    navigate('/records');
   };
 
   // Needs Attention subset (filtered by selected KPI card if active)
@@ -347,23 +362,17 @@ export default function App() {
     <div className="flex flex-col h-screen bg-[#f0f4f4] text-slate-600 font-sans antialiased overflow-hidden">
       
       {/* Top Header Navigation */}
-      <Topbar 
-        currentView={currentView}
-        setCurrentView={(view) => {
-          setCurrentView(view);
-          setCategoryRouteFilter(null);
-          setActiveKPIFilter(null);
-        }}
-      />
+      <Topbar />
 
       {/* Main Workspace Frame */}
       <div className="flex flex-1 overflow-hidden">
         
         {/* Dynamic Inner Workspace Panel */}
         <main className="flex-1 overflow-y-auto p-8 focus:outline-none">
+<Routes>
           
           {/* 1. DASHBOARD VIEW */}
-          {currentView === 'dashboard' && (
+          <Route path="/" element={<>
             <div className="space-y-8 max-w-5xl mx-auto">
               
               {/* Top Row Title / Actions */}
@@ -380,11 +389,6 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 self-start">
-                  <button className="text-teal-700 font-bold text-sm flex items-center gap-1 hover:text-teal-800">
-                    Manage <ChevronDown size={14} />
-                  </button>
-                </div>
               </div>
 
               {/* KPI metrics row */}
@@ -396,22 +400,28 @@ export default function App() {
                 activeFilter={activeKPIFilter}
                 onFilterChange={(status) => {
                   setActiveKPIFilter(status);
-                  setCurrentView('records');
+                  navigate('/records');
                 }}
+                onActionRequiredClick={() => {
+                  setActiveKPIFilter(RecordStatus.ExpiringSoon);
+                  navigate('/records');
+                }}
+                onSimulatorClick={() => setIsAlertSimulatorOpen(true)}
               />
 
               {/* Needs Attention List table */}
               <NeedsAttention 
                 records={filteredNeedsAttentionRecords}
                 onViewRecord={handleViewRecord}
-                onViewAll={() => setCurrentView('records')}
+                onViewAll={() => navigate('/records')}
+                onRenewRecord={handleOpenRenew}
               />
 
             </div>
-          )}
+          </>} />
 
           {/* 2. RECORDS TABLE REGISTRY */}
-          {currentView === 'records' && (
+          <Route path="/records" element={<>
             <div className="max-w-7xl mx-auto">
               <RecordsView 
                 records={records}
@@ -427,39 +437,43 @@ export default function App() {
                 }}
                 initialCategoryFilter={categoryRouteFilter}
                 initialStatusFilter={activeKPIFilter}
+                onImportRecords={(newRecords) => {
+                  setRecords(prev => [...newRecords, ...prev]);
+                }}
+                onRenewRecord={handleOpenRenew}
               />
             </div>
-          )}
+          </>} />
 
           {/* 3. CATEGORIES FOLDER BOARD */}
-          {currentView === 'categories' && (
+          <Route path="/categories" element={<>
             <div className="max-w-7xl mx-auto">
               <CategoriesView 
                 records={records}
                 onSelectCategory={handleCategorySelectRoute}
               />
             </div>
-          )}
+          </>} />
 
           {/* 4. INTERACTIVE DEADLINES CALENDAR */}
-          {currentView === 'calendar' && (
+          <Route path="/calendar" element={<>
             <div className="max-w-7xl mx-auto">
               <CalendarView 
                 records={records}
                 onViewRecord={handleViewRecord}
               />
             </div>
-          )}
+          </>} />
 
           {/* 5. METRICS ANALYTICS PANEL */}
-          {currentView === 'analytics' && (
+          <Route path="/analytics" element={<>
             <div className="max-w-7xl mx-auto">
               <AnalyticsView records={records} />
             </div>
-          )}
+          </>} />
 
           {/* 6. TEAM MANAGEMENT TAB */}
-          {currentView === 'team' && (
+          <Route path="/team" element={<>
             <div className="max-w-7xl mx-auto">
               <TeamView 
                 team={team}
@@ -467,10 +481,10 @@ export default function App() {
                 onToggleStatus={handleToggleTeamStatus}
               />
             </div>
-          )}
+          </>} />
 
           {/* 7. SYSTEM SETTINGS PANEL */}
-          {currentView === 'settings' && (
+          <Route path="/settings" element={<>
             <div className="max-w-7xl mx-auto">
               <SettingsView 
                 onResetData={handleResetSimulationDB}
@@ -478,18 +492,19 @@ export default function App() {
                 recordsCount={records.length}
               />
             </div>
-          )}
+          </>} />
 
           {/* 8. KNOWLEDGE HELP GUIDE */}
-          {currentView === 'help' && (
+          <Route path="/help" element={<>
             <div className="max-w-7xl mx-auto">
               <HelpView />
             </div>
-          )}
-        </main>
+          </>} />
+        </Routes>
+</main>
         
         {/* Right Sidebar Timeline Panel */}
-        {currentView === 'dashboard' && (
+        {location.pathname === '/' && (
           <RightSidebar records={records} />
         )}
       </div>
@@ -501,7 +516,23 @@ export default function App() {
         mode={modalMode}
         onSave={handleSaveRecord}
         onDelete={handleDeleteRecord}
+        onRenew={(id) => {
+          const rec = records.find(r => r.id === id);
+          if (rec) handleOpenRenew(rec);
+        }}
+      />
+
+      <RenewModal 
+        isOpen={isRenewModalOpen}
+        onClose={() => setIsRenewModalOpen(false)}
+        record={recordToRenew}
         onRenew={handleRenewRecord}
+      />
+
+      <AlertSimulatorModal 
+        isOpen={isAlertSimulatorOpen}
+        onClose={() => setIsAlertSimulatorOpen(false)}
+        records={records}
       />
 
     </div>

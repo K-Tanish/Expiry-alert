@@ -214,104 +214,110 @@ function addDays(dateStr: string, days: number): string {
 export function generateAllRecords(): RecordItem[] {
   const records = [...DETAILED_RECORDS];
   
-  // 1. Generate 9 more Expired records (dates before 2026-07-09)
+  // Track total events (expirations + reminders) to ensure max 3 per day
+  const dateCounts: Record<string, number> = {};
+
+  const incrementCount = (d: string) => {
+    dateCounts[d] = (dateCounts[d] || 0) + 1;
+  };
+  
+  const canAddEvent = (d: string) => {
+    return (dateCounts[d] || 0) < 3;
+  };
+
+  // Pre-fill with DETAILED_RECORDS
+  records.forEach(r => {
+    incrementCount(r.expiryDate);
+    const expDate = new Date(r.expiryDate);
+    expDate.setDate(expDate.getDate() - r.alertDays);
+    incrementCount(expDate.toISOString().split('T')[0]);
+  });
+
+  const generateOffsets = (start: number, count: number, dir: number) => {
+    const offsets: number[] = [];
+    let current = start;
+    while(offsets.length < count) {
+      const run = Math.floor(Math.random() * 3) + 1; // 1 to 3 consecutive days
+      for (let r = 0; r < run; r++) {
+        offsets.push(current);
+        current += dir;
+      }
+      const gap = Math.floor(Math.random() * 4) + 1; // 1 to 4 days gap
+      current += (gap * dir);
+    }
+    return offsets;
+  };
+
+  const scheduleRecords = (names: any[], offsets: number[], status: RecordStatus, idPrefix: string, count: number) => {
+    let offsetIdx = 0;
+    let currentOffsetCount = 0;
+    let targetForCurrentOffset = Math.floor(Math.random() * 3) + 1; // 1 to 3 records per day
+
+    for (let i = 0; i < count; i++) {
+      if (currentOffsetCount >= targetForCurrentOffset) {
+        offsetIdx++;
+        currentOffsetCount = 0;
+        targetForCurrentOffset = Math.floor(Math.random() * 3) + 1;
+      }
+      
+      const offset = offsets[offsetIdx];
+      currentOffsetCount++;
+      
+      const item = names[i % names.length];
+      const alertDays = 30;
+      
+      records.push({
+        id: `gen-${idPrefix}-${i}`,
+        name: i >= names.length ? `${item.name} - Ref ${i + 1000}` : item.name,
+        category: item.cat,
+        expiryDate: addDays(CURRENT_DATE_STR, offset),
+        status: status,
+        owner: SEED_TEAM[i % SEED_TEAM.length].name,
+        description: `Automated generated record for compliance tracking.`,
+        cost: item.cost + (i * 20),
+        alertDays: alertDays,
+        documentNumber: `${item.cat.substring(0,3).toUpperCase()}-${idPrefix.toUpperCase()}-${2000 + i}`,
+        reminderSent: status === RecordStatus.UpToDate ? false : Math.random() > 0.3
+      });
+    }
+  };
+
+  // 1. Expired records (dir: -1, starting from -3 days)
+  const expiredOffsets = generateOffsets(-3, 10, -1);
   const expiredNames = [
     { name: 'Environmental Consent to Operate', cat: RecordCategory.Licenses, cost: 3500 },
     { name: 'Office Rent Agreement - Wing B', cat: RecordCategory.Contracts, cost: 12000 },
     { name: 'Vehicle Insurance - Delivery Van A', cat: RecordCategory.Insurance, cost: 850 },
     { name: 'Elevator Safety Certificate', cat: RecordCategory.Compliance, cost: 600 },
     { name: 'Calibration Report - Scale Room 2', cat: RecordCategory.Inspections, cost: 400 },
-    { name: 'Waste Disposal License', cat: RecordCategory.Licenses, cost: 1500 },
-    { name: 'Software License - ERP Core', cat: RecordCategory.Contracts, cost: 25000 },
-    { name: 'Group Health Insurance Policy', cat: RecordCategory.Insurance, cost: 45000 },
-    { name: 'Annual Safety Audit Filing', cat: RecordCategory.Compliance, cost: 2000 }
+    { name: 'Waste Disposal License', cat: RecordCategory.Licenses, cost: 1500 }
   ];
+  scheduleRecords(expiredNames, expiredOffsets, RecordStatus.Expired, 'exp', 8);
 
-  for (let i = 0; i < 9; i++) {
-    const item = expiredNames[i];
-    const daysAgo = 10 + i * 15; // scattered past dates
-    records.push({
-      id: `gen-exp-${i}`,
-      name: item.name,
-      category: item.cat,
-      expiryDate: addDays(CURRENT_DATE_STR, -daysAgo),
-      status: RecordStatus.Expired,
-      owner: SEED_TEAM[i % SEED_TEAM.length].name,
-      description: `Historical audit of ${item.name}. Regular renewal required.`,
-      cost: item.cost,
-      alertDays: 30,
-      documentNumber: `${item.cat.substring(0,3).toUpperCase()}-EXP-2026-${100 + i}`,
-      reminderSent: true
-    });
-  }
-
-  // 2. Generate 24 more Expiring Soon records (dates in next 1-30 days)
+  // 2. Expiring Soon records (dir: +1, starting from +2 days)
+  const soonOffsets = generateOffsets(2, 20, 1);
   const expiringSoonNames = [
-    { name: 'Trade License - City Office', cat: RecordCategory.Licenses, cost: 1800, days: 5 },
-    { name: 'Consulting Contract - TechCorp', cat: RecordCategory.Contracts, cost: 15000, days: 9 },
-    { name: 'Marine Cargo Insurance Policy', cat: RecordCategory.Insurance, cost: 8400, days: 11 },
-    { name: 'Labor Welfare Compliance Filing', cat: RecordCategory.Compliance, cost: 1100, days: 12 },
-    { name: 'Structural Safety Audit', cat: RecordCategory.Inspections, cost: 4200, days: 15 },
-    { name: 'Hazardous Waste Permit', cat: RecordCategory.Licenses, cost: 3000, days: 18 },
-    { name: 'Catering Vendor Agreement', cat: RecordCategory.Contracts, cost: 5000, days: 22 },
-    { name: 'D&O Liability Insurance', cat: RecordCategory.Insurance, cost: 19500, days: 24 },
-    { name: 'Data Privacy Impact Assessment', cat: RecordCategory.Compliance, cost: 7500, days: 26 },
-    { name: 'Warehouse Fire Alarm Inspection', cat: RecordCategory.Inspections, cost: 1200, days: 28 },
-    { name: 'Water Discharge Consent', cat: RecordCategory.Licenses, cost: 2200, days: 29 },
-    { name: 'Logistics SLA Contract', cat: RecordCategory.Contracts, cost: 9800, days: 8 },
+    { name: 'Trade License - City Office', cat: RecordCategory.Licenses, cost: 1800 },
+    { name: 'Consulting Contract - TechCorp', cat: RecordCategory.Contracts, cost: 15000 },
+    { name: 'Marine Cargo Insurance Policy', cat: RecordCategory.Insurance, cost: 8400 },
+    { name: 'Labor Welfare Compliance Filing', cat: RecordCategory.Compliance, cost: 1100 },
+    { name: 'Structural Safety Audit', cat: RecordCategory.Inspections, cost: 4200 },
+    { name: 'Hazardous Waste Permit', cat: RecordCategory.Licenses, cost: 3000 },
+    { name: 'Catering Vendor Agreement', cat: RecordCategory.Contracts, cost: 5000 }
   ];
+  scheduleRecords(expiringSoonNames, soonOffsets, RecordStatus.ExpiringSoon, 'soon', 15);
 
-  for (let i = 0; i < 24; i++) {
-    const preset = expiringSoonNames[i % expiringSoonNames.length];
-    // Spread evenly across 1 to 30 days
-    const daysAhead = 1 + (i % 30);
-    records.push({
-      id: `gen-soon-${i}`,
-      name: i >= expiringSoonNames.length ? `${preset.name} (Sec ${Math.ceil(i/10)})` : preset.name,
-      category: preset.cat,
-      expiryDate: addDays(CURRENT_DATE_STR, daysAhead),
-      status: RecordStatus.ExpiringSoon,
-      owner: SEED_TEAM[(i + 1) % SEED_TEAM.length].name,
-      description: `Renewal pipeline for ${preset.name}. Requires approval.`,
-      cost: preset.cost + (i * 250),
-      alertDays: 30,
-      documentNumber: `${preset.cat.substring(0,3).toUpperCase()}-SOON-2026-${200 + i}`,
-      reminderSent: Math.random() > 0.3
-    });
-  }
-
-  // 3. Generate 283 more Active/Up to Date records (dates >30 days)
+  // 3. Up to Date records (dir: +1, starting from +35 days)
+  const activeOffsets = generateOffsets(35, 70, 1);
   const activeBase = [
     { name: 'Customs Broker License', cat: RecordCategory.Licenses, cost: 5500 },
     { name: 'Office Lease - Tower B', cat: RecordCategory.Contracts, cost: 135000 },
     { name: 'Cyber Security Cyber-Risk Policy', cat: RecordCategory.Insurance, cost: 24000 },
     { name: 'ISO 27001 Certification', cat: RecordCategory.Compliance, cost: 14000 },
     { name: 'Electrical System Earthing Test', cat: RecordCategory.Inspections, cost: 1500 },
-    { name: 'Aviation License - Heliport', cat: RecordCategory.Licenses, cost: 10000 },
-    { name: 'Facility Management Agreement', cat: RecordCategory.Contracts, cost: 42000 },
-    { name: 'Commercial Vehicle fleet insurance', cat: RecordCategory.Insurance, cost: 38000 },
-    { name: 'Internal Financial Controls Audit', cat: RecordCategory.Compliance, cost: 11000 },
-    { name: 'HVAC Air Quality Audit', cat: RecordCategory.Inspections, cost: 1900 },
+    { name: 'Aviation License - Heliport', cat: RecordCategory.Licenses, cost: 10000 }
   ];
-
-  for (let i = 0; i < 283; i++) {
-    const base = activeBase[i % activeBase.length];
-    // Spread between 31 and 365 days ahead
-    const daysAhead = 31 + Math.floor((i * 334) / 283);
-    records.push({
-      id: `gen-act-${i}`,
-      name: `${base.name} - Ref ${i + 1000}`,
-      category: base.cat,
-      expiryDate: addDays(CURRENT_DATE_STR, daysAhead),
-      status: RecordStatus.UpToDate,
-      owner: SEED_TEAM[i % SEED_TEAM.length].name,
-      description: `Fully active and registered record: ${base.name}. Managed securely.`,
-      cost: base.cost + (i * 50),
-      alertDays: 30,
-      documentNumber: `${base.cat.substring(0,3).toUpperCase()}-ACT-2026-${3000 + i}`,
-      reminderSent: false
-    });
-  }
+  scheduleRecords(activeBase, activeOffsets, RecordStatus.UpToDate, 'act', 60);
 
   return records;
 }

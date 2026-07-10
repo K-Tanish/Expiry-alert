@@ -1,14 +1,9 @@
-import { Search, Mail, Bell, ChevronDown } from 'lucide-react';
-import { RecordItem } from '../types';
+import { Search, Mail, Bell, Settings, Users, HelpCircle } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
-interface TopbarProps {
-  currentView: string;
-  setCurrentView: (view: string) => void;
-}
-
-export default function Topbar({ currentView, setCurrentView }: TopbarProps) {
+export default function Topbar() {
   return (
-    <div className="flex items-center justify-between px-8 py-4 bg-[#f0f4f4]">
+    <div className="flex items-center justify-between px-8 py-4 bg-[#f0f4f4] select-none">
       {/* Left: Logo and Nav */}
       <div className="flex items-center gap-12">
         <div className="flex items-center">
@@ -20,28 +15,60 @@ export default function Topbar({ currentView, setCurrentView }: TopbarProps) {
         </div>
 
         <nav className="flex items-center gap-8">
-          <button 
-            onClick={() => setCurrentView('dashboard')}
-            className={`text-sm font-semibold transition-all relative ${
-              currentView === 'dashboard' ? 'text-teal-700' : 'text-slate-500 hover:text-teal-700'
-            }`}
+          <NavLink 
+            to="/"
+            end
+            className={({ isActive }) => 
+              `text-sm font-semibold transition-all relative ${
+                isActive ? 'text-teal-700' : 'text-slate-500 hover:text-teal-700'
+              }`
+            }
           >
-            Overview
-            {currentView === 'dashboard' && (
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-teal-700 rounded-full" />
+            {({ isActive }) => (
+              <>
+                Overview
+                {isActive && (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-teal-700 rounded-full" />
+                )}
+              </>
             )}
-          </button>
-          <button 
-            onClick={() => setCurrentView('analytics')}
-            className={`text-sm font-semibold transition-all relative ${
-              currentView === 'analytics' ? 'text-teal-700' : 'text-slate-500 hover:text-teal-700'
-            }`}
+          </NavLink>
+
+          <NavLink 
+            to="/records"
+            className={({ isActive }) => 
+              `text-sm font-semibold transition-all relative ${
+                isActive ? 'text-teal-700' : 'text-slate-500 hover:text-teal-700'
+              }`
+            }
           >
-            Reports
-            {currentView === 'analytics' && (
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-teal-700 rounded-full" />
+            {({ isActive }) => (
+              <>
+                Registry
+                {isActive && (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-teal-700 rounded-full" />
+                )}
+              </>
             )}
-          </button>
+          </NavLink>
+
+          <NavLink 
+            to="/analytics"
+            className={({ isActive }) => 
+              `text-sm font-semibold transition-all relative ${
+                isActive ? 'text-teal-700' : 'text-slate-500 hover:text-teal-700'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                Reports
+                {isActive && (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-teal-700 rounded-full" />
+                )}
+              </>
+            )}
+          </NavLink>
         </nav>
       </div>
 
@@ -60,16 +87,25 @@ export default function Topbar({ currentView, setCurrentView }: TopbarProps) {
       {/* Right: Actions and Profile */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-4 text-slate-500">
-          <button className="relative hover:text-teal-700 transition-colors">
-            <Mail size={20} />
-          </button>
+          <NavLink to="/team" className={({ isActive }) => `relative transition-colors ${isActive ? 'text-teal-700' : 'hover:text-teal-700'}`} title="Team">
+            <Users size={18} />
+          </NavLink>
+          <NavLink to="/settings" className={({ isActive }) => `relative transition-colors ${isActive ? 'text-teal-700' : 'hover:text-teal-700'}`} title="Settings">
+            <Settings size={18} />
+          </NavLink>
+          <NavLink to="/help" className={({ isActive }) => `relative transition-colors ${isActive ? 'text-teal-700' : 'hover:text-teal-700'}`} title="Help">
+            <HelpCircle size={18} />
+          </NavLink>
+          
+          <div className="w-px h-6 bg-slate-200 mx-2"></div>
+          
           <button className="relative hover:text-teal-700 transition-colors">
             <Bell size={20} />
             <span className="absolute top-0 right-0 w-2 h-2 bg-yellow-400 rounded-full ring-2 ring-[#f0f4f4]"></span>
           </button>
         </div>
 
-        <div className="flex items-center gap-3 pl-4">
+        <div className="flex items-center gap-3 pl-2">
           <div className="text-right">
             <p className="text-sm font-bold text-slate-800 leading-tight">Thomas Gepsan</p>
             <p className="text-[11px] text-slate-500">Super Admin</p>

@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Search, Filter, ArrowUpDown, ChevronLeft, ChevronRight, Download, Plus, AlertCircle, Trash2, Edit2, Eye } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, ChevronLeft, ChevronRight, Download, Plus, AlertCircle, Trash2, Edit2, Eye, UploadCloud, CalendarClock } from 'lucide-react';
 import { RecordItem, RecordCategory, RecordStatus } from '../types';
+import ImportModal from './ImportModal';
 
 interface RecordsViewProps {
   records: RecordItem[];
@@ -12,6 +13,8 @@ interface RecordsViewProps {
   onEditRecord: (record: RecordItem) => void;
   initialCategoryFilter?: RecordCategory | null;
   initialStatusFilter?: RecordStatus | null;
+  onImportRecords?: (records: RecordItem[]) => void;
+  onRenewRecord?: (record: RecordItem) => void;
 }
 
 type SortField = 'name' | 'expiryDate' | 'cost';
@@ -27,10 +30,14 @@ export default function RecordsView({
   onEditRecord,
   initialCategoryFilter = null,
   initialStatusFilter = null,
+  onImportRecords,
+  onRenewRecord,
 }: RecordsViewProps) {
   // Filters State
   const [statusFilter, setStatusFilter] = useState<RecordStatus | null>(initialStatusFilter);
   const [categoryFilter, setCategoryFilter] = useState<RecordCategory | null>(initialCategoryFilter);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [pinImportsToTop, setPinImportsToTop] = useState(false);
 
   // Sync with props when redirected from Dashboard or Categories folder board
   useEffect(() => {
@@ -88,6 +95,11 @@ export default function RecordsView({
 
     // Sorting
     result.sort((a, b) => {
+      if (pinImportsToTop) {
+        if (a.isNewlyImported && !b.isNewlyImported) return -1;
+        if (!a.isNewlyImported && b.isNewlyImported) return 1;
+      }
+
       let valA = a[sortField];
       let valB = b[sortField];
 
@@ -104,7 +116,7 @@ export default function RecordsView({
     });
 
     return result;
-  }, [records, searchTerm, statusFilter, categoryFilter, sortField, sortOrder]);
+  }, [records, searchTerm, statusFilter, categoryFilter, sortField, sortOrder, pinImportsToTop]);
 
   // Paginated chunk
   const paginatedRecords = useMemo(() => {
@@ -160,6 +172,14 @@ export default function RecordsView({
           >
             <Download size={14} />
             Export CSV
+          </button>
+          
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-bold rounded-xl shadow-sm transition-all border border-teal-200"
+          >
+            <UploadCloud size={14} />
+            Import Excel
           </button>
           
           <button
@@ -295,7 +315,7 @@ export default function RecordsView({
                 </tr>
               ) : (
                 paginatedRecords.map((rec) => (
-                  <tr key={rec.id} className="hover:bg-slate-50/40 transition-colors">
+                  <tr key={rec.id} className={`transition-colors ${rec.isNewlyImported ? 'bg-teal-50 hover:bg-teal-100/50' : 'hover:bg-slate-50/40'}`}>
                     {/* Record Name / Doc ID */}
                     <td className="p-4 pl-6 max-w-[200px]">
                       <p className="font-bold text-slate-800 truncate" title={rec.name}>{rec.name}</p>
@@ -346,6 +366,15 @@ export default function RecordsView({
                           title="Inspect Details"
                         >
                           <Eye size={14} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (onRenewRecord) onRenewRecord(rec);
+                          }}
+                          className="p-1.5 hover:bg-teal-50 rounded-lg text-teal-600 transition-colors"
+                          title="Renew Document"
+                        >
+                          <CalendarClock size={14} />
                         </button>
                         <button
                           onClick={() => onEditRecord(rec)}
@@ -428,6 +457,22 @@ export default function RecordsView({
           </div>
         </div>
       </div>
+      
+      {/* Import Modal */}
+      <ImportModal 
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={(importedRecords) => {
+          if (onImportRecords) {
+            onImportRecords(importedRecords);
+          }
+          setCurrentPage(1);
+          setPinImportsToTop(true);
+          setTimeout(() => {
+            setPinImportsToTop(false);
+          }, 10000);
+        }}
+      />
     </div>
   );
 }

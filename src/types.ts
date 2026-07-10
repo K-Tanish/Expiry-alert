@@ -25,6 +25,7 @@ export interface RecordItem {
   documentNumber?: string;
   reminderSent: boolean;
   notes?: string;
+  isNewlyImported?: boolean;
 }
 
 export interface TeamMember {
